@@ -146,22 +146,22 @@ Resultados da simulação com `rng=42`.
 ### 3.1 Checkpoints
 
 | Fase | Dia | Alvo (Calhoun) | Simulação v0 | Diferença | % Alvo |
-|---|---|---|---|---|---|---|
-| Início (A) | 0 | 8 | **8** | +0 | 100% |
-| Fim Fase A | 104 | ~50 | **13** | −37 | 26% |
-| Fim Fase B | 315 | 620 | **1291** | +671 | 208% |
-| Pico | 560 | 2200 | **3120** | +920 | 142% |
-| Último nasc. | 600 | ~2100 | **2806** | +706 | 134% |
-| Declínio | 736 | 2056 | **2184** | +128 | 106% |
-| Quase extinção | 1471 | ~100 | **25** | −75 | 25% |
-| Extinção | 1588 | 0 | **8** | +8 | — |
+|---|---|---|---|---|---|
+| Início (A) | 0 | 8 | 8 | +0 | 100% |
+| Fim Fase A | 104 | ~50 | 13 | −37 | 26% |
+| Fim Fase B | 315 | 620 | 1291 | +671 | 208% |
+| Pico | 560 | 2200 | 3120 | +920 | 142% |
+| Último nasc. | 600 | ~2100 | 2806 | +706 | 134% |
+| Declínio | 736 | 2056 | 2184 | +128 | 106% |
+| Quase extinção | 1471 | ~100 | 25 | −75 | 25% |
+| Extinção | 1588 | 0 | 8 | +8 | — |
 
 **Pico populacional:** 5.313 (passo 387)
 
 ### 3.2 Séries Temporais Detalhadas
 
 | Passo | Pop | Colony Stress | Mean Stress | BEAUTIFUL | Agressões |
-|---|---|---|---|---|---|---|
+|---|---|---|---|---|---|
 | 0 | 8 | 0.001 | 0.000 | 0 | 0 |
 | 104 | 13 | 0.005 | 0.005 | 0 | 0 |
 | 210 | 82 | 0.010 | 0.003 | 0 | 0 |
@@ -183,9 +183,9 @@ Resultados da simulação com `rng=42`.
 
 **Fase B (104–315):** O modelo cresce 2× mais rápido que o experimento (1291 vs 620). O `colony_stress` ainda está baixo (0.152) e não ativou mecanismos de freio. Isso sugere que a **penalidade social** (`1 − social_damage × 0.9`) não é forte o suficiente para desacelerar o crescimento em populações abaixo de 1000.
 
-**Pico e Platô (315–736):** O pico ocorre no passo 387 (5.147), 2.3× o pico histórico (2.200). O modelo só atinge a faixa correta no dia 736 (2.112 vs 2.056, diferença de apenas +56). O platô de Calhoun de 2.056–2.200 é replicado com erro <5% no final da Fase C.
+**Pico e Platô (315–736):** O pico ocorre no passo 387 (5.313), 2.4× o pico histórico (2.200). O modelo só atinge a faixa correta no dia 736 (2.184 vs 2.056, diferença de +128). O platô de Calhoun de 2.056–2.200 é replicado com erro <7% no final da Fase C.
 
-**Fase D (736–1588):** O declínio é abrupto. A população cai de 2.112 (736) para 13 (1471). Calhoun observou ~100 no dia 1471. O modelo extingue a colônia antes, indicando que o **efeito BEAUTIFUL esteriliza a população mais rápido que no experimento real**.
+**Fase D (736–1588):** O declínio é abrupto. A população cai de 2.184 (736) para 25 (1471). Calhoun observou ~100 no dia 1471. O modelo extingue a colônia antes, indicando que o **efeito BEAUTIFUL esteriliza a população mais rápido que no experimento real**.
 
 ### 3.5 Limitações Conhecidas
 
@@ -238,4 +238,4 @@ Veja também: [`paraiso_dos_ratos.md`](paraiso_dos_ratos.md) — resumo do exper
 
 ---
 
-> **Nota sobre a calibração:** Esta é a versão **v0** do modelo, que usa `BASE_FERTILITY_RATE=0.05` (ajustada por tentativa e erro para replicar o pico de Calhoun). O modelo não usa parâmetros condicionais por fase — todas as 4 fases emergem das mesmas regras, o que é fiel ao espírito do experimento. A discrepância principal (pico de 5.147 vs 2.200) indica que o mecanismo de `social_penalty` linear é insuficiente para frear o crescimento na Fase B, e que a transição para BEAUTIFUL é abrupta demais quando `colony_stress` ultrapassa 0.60.
+> **Nota sobre a calibração:** Esta é a versão **v0** do modelo, com `BASE_FERTILITY_RATE=0.05` e limiares BEAUTIFUL em **0.50** (ajustados por tentativa e erro). O modelo não usa parâmetros condicionais por fase — todas as 4 fases emergem das mesmas regras. A discrepância principal (pico de 5.313 vs 2.200) indica que a fórmula `pop/3000×0.3 + mean_stress×0.7` dá peso excessivo ao estresse individual, que demora a subir.

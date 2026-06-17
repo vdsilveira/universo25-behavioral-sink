@@ -140,6 +140,11 @@ if 'model' not in st.session_state:
 
 CALHOUN_CHECKPOINTS = [0, 104, 315, 560, 600, 736, 1471, 1588]
 CALHOUN_TARGETS  = [8, 50, 620, 2200, 2100, 2056, 100, 0]
+CALHOUN_TARGETS_LABEL = ["8", "~50", "620", "2200", "~2100", "2056", "~100", "0"]
+CHECKPOINT_NAMES = [
+    "Início (A)", "Fim Fase A", "Fim Fase B", "Pico",
+    "Último nasc.", "Declínio", "Quase extinção", "Extinção",
+]
 
 
 def evaluate_with_llm(pop_history, stress_history, col_history,
@@ -321,25 +326,53 @@ def run_simulation(n_steps, grid_w, grid_h, fertility, litter_max,
     col3.metric("Estresse Máximo", f"{max(stress_history):.2f}")
     col4.metric("BEAUTIFUL (final)", f"{beautiful:.0f}")
 
-    # LLM evaluation
+    # LLM evaluation (fetch before side-by-side display)
     with st.spinner("Analisando resultados com IA..."):
         llm_text, llm_error = evaluate_with_llm(
             pop_history, stress_history, col_history,
             beautiful_history, params, n_steps,
         )
 
-    st.subheader("Avaliação do Modelo")
-    if llm_text:
-        st.markdown(
-            f"<div style='padding:1rem; border-radius:0.5rem; "
-            f"background:#1a1a2e; border:1px solid #e94560; "
-            f"color:#eee; line-height:1.6;'>"
-            f"{llm_text.replace(chr(10), '<br>')}"
-            f"</div>",
-            unsafe_allow_html=True,
-        )
-    elif llm_error:
-        st.warning(llm_error)
+    # Side-by-side: Comparison + Evaluation
+    st.subheader("Comparação com Experimento Real e Avaliação do Modelo por IA")
+    col_left, col_right = st.columns(2)
+
+    with col_left:
+        st.markdown("### 📊 Comparação com Experimento Real")
+        rows = []
+        peak = max(pop_history)
+        peak_step = pop_history.index(peak)
+        for day, target, tlabel, name in zip(
+            CALHOUN_CHECKPOINTS, CALHOUN_TARGETS, CALHOUN_TARGETS_LABEL, CHECKPOINT_NAMES
+        ):
+            sim_val = int(pop_history[min(day, len(pop_history) - 1)])
+            diff = sim_val - target
+            if diff > 0:
+                diff_str = f"<span style='color:#22c55e'>+{diff}</span>"
+            elif diff < 0:
+                diff_str = f"<span style='color:#ef4444'>{diff}</span>"
+            else:
+                diff_str = "0"
+            pct = f"{sim_val / target * 100:.0f}%" if target > 0 else "—"
+            rows.append(f"| {name} | {day} | {tlabel} | **{sim_val}** | {diff_str} | {pct} |")
+        table = "| Fase | Dia | Alvo (Calhoun) | Simulação | Diferença | % Alvo |\n|---|---|---|---|---|---|\n"
+        table += "\n".join(rows)
+        table += f"\n\n**Pico populacional:** {peak} (passo {peak_step})"
+        st.markdown(table, unsafe_allow_html=True)
+
+    with col_right:
+        st.markdown("### 🤖 Avaliação do Modelo por IA")
+        if llm_text:
+            st.markdown(
+                f"<div style='padding:1rem; border-radius:0.5rem; "
+                f"background:#1a1a2e; border:1px solid #e94560; "
+                f"color:#eee; line-height:1.6;'>"
+                f"{llm_text.replace(chr(10), '<br>')}"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+        elif llm_error:
+            st.warning(llm_error)
 
     fig = plot_metrics(model)
     st.pyplot(fig)
