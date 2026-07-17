@@ -65,7 +65,7 @@ O modelo simula uma colônia de camundongos em ambiente utópico (comida e água
 | `MAX_AGE` | 800 | Turnos de vida máxima |
 | `REPRODUCTIVE_AGE_START` | 30 | Maturidade sexual |
 | `REPRODUCTIVE_AGE_END` | 600 | Fim da fertilidade |
-| `BASE_FERTILITY_RATE` | **0.05** | Probabilidade base de acasalamento |
+| `BASE_FERTILITY_RATE` | **0.15** | Probabilidade base de acasalamento |
 | `PREGNANCY_DURATION` | 18 | Turnos de gestação |
 | `LITTER_SIZE_MIN` | 3 | Mínimo filhotes/ninhada |
 | `LITTER_SIZE_MAX` | 5 | Máximo filhotes/ninhada |
@@ -75,9 +75,9 @@ O modelo simula uma colônia de camundongos em ambiente utópico (comida e água
 
 | Parâmetro | Valor | Mecanismo |
 |---|---|---|
-| `STRESS_GAIN_RATE` | 0.012 | Ganho de stress em densidade alta (gain = rate × min(1, nearby/threshold)) |
+| `STRESS_GAIN_RATE` | **0.015** | Ganho de stress em densidade alta (gain = rate × min(1, nearby/threshold)) |
 | `STRESS_RECOVERY_RATE` | 0.018 | Recuperação em baixa densidade |
-| `STRESS_SPREAD_RATE` | 0.01 | Contágio social (stressed_nearby × 0.08) |
+| `STRESS_SPREAD_RATE` | 0.010 | Contágio social (stressed_nearby × 0.08) |
 | `ALPHA_THRESHOLD` | 0.50 | Stress máximo para manter status ALPHA |
 | `BEAUTIFUL_EMERGENCE_THRESHOLD` | **0.50** | `colony_stress` mínimo para BEAUTIFUL progressivo |
 | `HYPERSEXUALITY_THRESHOLD` | 0.80 | Stress que dispara hipersexualidade |
@@ -87,7 +87,7 @@ O modelo simula uma colônia de camundongos em ambiente utópico (comida e água
 | `RESORPTION_PROBABILITY` | 0.35 | Chance de reabsorção fetal (× stress) |
 | `MATERNAL_AGGRESSION_THRESHOLD` | 0.40 | Stress materno que dispara infanticídio |
 | `SOCIAL_DAMAGE_INHERITANCE` | 0.25 | Fração do `social_damage` parental herdada |
-| `SOCIAL_DAMAGE_BIRTH_FACTOR` | 1.0 | `social_damage = colony_stress × factor + herança` |
+| `SOCIAL_DAMAGE_BIRTH_FACTOR` | **1.3** | `social_damage = colony_stress × factor + herança` |
 | `SOCIAL_DAMAGE_WEANING_RATE` | 0.03 | Acúmulo diário de `social_damage` na amamentação |
 | `SOCIAL_DAMAGE_BEAUTIFUL_THRESHOLD` | **0.50** | `social_damage` que torna BEAUTIFUL automaticamente |
 | `BEAUTIFUL_MORTALITY_RATE` | 0.0001 | Mortalidade base dos BEAUTIFUL |
@@ -97,8 +97,10 @@ O modelo simula uma colônia de camundongos em ambiente utópico (comida e água
 
 **Colony Stress** (calculado a cada passo):
 ```python
-raw = min(1.0, pop / 3000 * 0.3 + mean_stress * 0.7)
-colony_stress = max(raw, colony_stress * 0.995)  # decay de 0.5%/passo
+raw = min(1.0, pop / divisor * 0.3 + mean_stress * 0.7)
+colony_stress = max(raw, colony_stress * 0.9995)  # decay de 0.05%/passo
+
+**Divisor:** `COLONY_STRESS_DIVISOR = 2500` (população que equivale a 50% do peso no estresse da colônia)
 ```
 
 **Density Gain (contínuo)**:
@@ -139,39 +141,39 @@ if nest_occupants >= NEST_CAPACITY (10):
 
 ---
 
-## 3. Planilha de Validação — v0
+## 3. Planilha de Validação — V0.1
 
 Resultados da simulação com `rng=42`.
 
 ### 3.1 Checkpoints
 
-| Fase | Dia | Alvo (Calhoun) | Simulação v0 | Diferença | % Alvo |
+| Fase | Dia | Alvo (Calhoun) | Simulação V0.1 | Diferença | % Alvo |
 |---|---|---|---|---|---|
 | Início (A) | 0 | 8 | 8 | +0 | 100% |
-| Fim Fase A | 104 | ~50 | 13 | −37 | 26% |
-| Fim Fase B | 315 | 620 | 1291 | +671 | 208% |
-| Pico | 560 | 2200 | 3120 | +920 | 142% |
-| Último nasc. | 600 | ~2100 | 2806 | +706 | 134% |
-| Declínio | 736 | 2056 | 2184 | +128 | 106% |
-| Quase extinção | 1471 | ~100 | 25 | −75 | 25% |
-| Extinção | 1588 | 0 | 8 | +8 | — |
+| Fim Fase A | 104 | ~50 | 17 | −33 | 34% |
+| Fim Fase B | 315 | 620 | 3330 | +2710 | — |
+| Pico | 560 | 2200 | **2113** | −87 | **96%** |
+| Último nasc. | 600 | ~2100 | **2000** | −100 | **95%** |
+| Declínio | 736 | 2056 | **1654** | −402 | 80% |
+| Quase extinção | 1471 | ~100 | 13 | −87 | 13% |
+| Extinção | 1588 | 0 | 0 | +0 | 100% |
 
-**Pico populacional:** 5.313 (passo 387)
+**Pico populacional:** 3.442 (passo 301)
 
 ### 3.2 Séries Temporais Detalhadas
 
 | Passo | Pop | Colony Stress | Mean Stress | BEAUTIFUL | Agressões |
 |---|---|---|---|---|---|
 | 0 | 8 | 0.001 | 0.000 | 0 | 0 |
-| 104 | 13 | 0.005 | 0.005 | 0 | 0 |
-| 210 | 82 | 0.010 | 0.003 | 0 | 0 |
-| 315 | 1291 | 0.152 | 0.037 | 0 | 17 |
-| 420 | 4765 | 0.903 | 0.612 | 2181 | 2888 |
-| 560 | 3120 | 0.946 | 0.906 | 1708 | 840 |
-| 600 | 2806 | 0.932 | 0.929 | 1544 | 699 |
-| 736 | 2184 | 0.892 | 0.961 | 1238 | 414 |
-| 920 | 1645 | 0.843 | 0.969 | 947 | 187 |
-| 1471 | 25 | 0.647 | 0.006 | 25 | 0 |
+| 104 | 17 | 0.006 | 0.005 | 0 | 0 |
+| 210 | 402 | 0.066 | 0.027 | 0 | 1 |
+| 315 | 3330 | 0.772 | 0.536 | 1732 | 1710 |
+| 420 | 2653 | 0.906 | 0.839 | 1646 | 647 |
+| 560 | 2113 | 0.892 | 0.911 | 1357 | 327 |
+| 600 | 2000 | 0.881 | 0.915 | 1296 | 274 |
+| 736 | 1654 | 0.863 | 0.948 | 1089 | 177 |
+| 920 | 1322 | 0.826 | 0.952 | 863 | 127 |
+| 1471 | 13 | 0.631 | 0.006 | 13 | 0 |
 
 ### 3.3 Curva de Validação
 
@@ -179,13 +181,13 @@ Resultados da simulação com `rng=42`.
 
 ### 3.4 Análise por Fase
 
-**Fase A (0–104):** Modelo subestima o crescimento (~13 vs 50). Na simulação, os agentes demoram a se reproduzir por causa do cooldown inicial e da gestação. Calhoun observou o primeiro nascimento ~dia 40, mas no modelo os primeiros filhotes chegam perto do dia 50–70.
+**Fase A (0–104):** Modelo subestima o crescimento (17 vs ~50). O raio de busca de parceiros (3 células) em grid 50×50 com apenas 8 agentes dificulta os encontros iniciais. Calhoun observou ~50 ao dia 104.
 
-**Fase B (104–315):** O modelo cresce 2× mais rápido que o experimento (1291 vs 620). O `colony_stress` ainda está baixo (0.152) e não ativou mecanismos de freio. Isso sugere que a **penalidade social** (`1 − social_damage × 0.9`) não é forte o suficiente para desacelerar o crescimento em populações abaixo de 1000.
+**Fase B (104–315):** O modelo cresce de 17 para 3330 — muito acima do alvo 620. O `colony_stress` (0.066 no passo 210) ainda está abaixo do threshold BEAUTIFUL (0.50), permitindo crescimento sem freio até o passo 260, quando BEAUTIFUL emerge (pop=2263).
 
-**Pico e Platô (315–736):** O pico ocorre no passo 387 (5.313), 2.4× o pico histórico (2.200). O modelo só atinge a faixa correta no dia 736 (2.184 vs 2.056, diferença de +128). O platô de Calhoun de 2.056–2.200 é replicado com erro <7% no final da Fase C.
+**Pico e Platô (315–736):** Pico de 3.442 no passo 301, mas o passo 560 registra 2.113 — **96% do alvo de Calhoun (2.200)**. O platô entre 560–736 mostra declínio gradual com erro decrescente.
 
-**Fase D (736–1588):** O declínio é abrupto. A população cai de 2.184 (736) para 25 (1471). Calhoun observou ~100 no dia 1471. O modelo extingue a colônia antes, indicando que o **efeito BEAUTIFUL esteriliza a população mais rápido que no experimento real**.
+**Fase D (736–1588):** A população cai de 1.654 (736) para 13 (1471). Calhoun observou ~100 no dia 1471. O modelo extingue antes, indicando que o **efeito BEAUTIFUL esteriliza a população mais rápido que no experimento real**.
 
 ### 3.5 Limitações Conhecidas
 
@@ -238,4 +240,4 @@ Veja também: [`paraiso_dos_ratos.md`](paraiso_dos_ratos.md) — resumo do exper
 
 ---
 
-> **Nota sobre a calibração:** Esta é a versão **v0** do modelo, com `BASE_FERTILITY_RATE=0.05` e limiares BEAUTIFUL em **0.50** (ajustados por tentativa e erro). O modelo não usa parâmetros condicionais por fase — todas as 4 fases emergem das mesmas regras. A discrepância principal (pico de 5.313 vs 2.200) indica que a fórmula `pop/3000×0.3 + mean_stress×0.7` dá peso excessivo ao estresse individual, que demora a subir.
+> **Nota sobre a calibração:** Esta é a versão **V0.1** do modelo, com `BASE_FERTILITY_RATE=0.15`, `STRESS_GAIN_RATE=0.015`, `COLONY_STRESS_DIVISOR=2500`, `SOCIAL_DAMAGE_BIRTH_FACTOR=1.3` e limiares BEAUTIFUL em 0.50. O modelo não usa parâmetros condicionais por fase — todas as 4 fases emergem das mesmas regras. O passo 560 atinge **96% do alvo de Calhoun (2.113 vs 2.200)** — a calibração mais próxima obtida até o momento.

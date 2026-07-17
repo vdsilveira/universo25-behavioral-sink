@@ -30,8 +30,6 @@ from universo25_model import (
     RESORPTION_PROBABILITY, MATERNAL_AGGRESSION_THRESHOLD,
     SOCIAL_DAMAGE_BEAUTIFUL_THRESHOLD,
     SOCIAL_DAMAGE_BIRTH_FACTOR,
-    STRESSED_DENSITY_THRESHOLD, NEST_CAPACITY,
-    BEAUTIFUL_STRESS_MORTALITY,
 )
 
 st.set_page_config(
@@ -58,9 +56,6 @@ with st.sidebar:
                         help="Número de células na horizontal. 50² = 2500 células, 80² = 6400.")
     grid_h = st.slider("Altura do grid", 30, 80, GRID_HEIGHT, 5,
                         help="Número de células na vertical.")
-    stressed_density_th = st.slider("Limiar densidade estresse",
-                                    3, 24, STRESSED_DENSITY_THRESHOLD, 1,
-                                    help="Vizinhos próximos para ganho máximo de estresse.")
 
     st.subheader("Biológicos")
     fertility = st.slider("Taxa de fertilidade",
@@ -73,12 +68,6 @@ with st.sidebar:
     max_age = st.slider("Idade máxima (turnos)",
                         200, 1000, MAX_AGE, 50,
                         help="Turnos de vida máxima. Agentes morrem ao atingir esta idade.")
-    repro_start = st.slider("Início idade reprodutiva",
-                            10, 150, REPRODUCTIVE_AGE_START, 5,
-                            help="Idade mínima para acasalamento.")
-    repro_end = st.slider("Fim idade reprodutiva",
-                          200, 800, REPRODUCTIVE_AGE_END, 10,
-                          help="Idade máxima para acasalamento.")
 
     st.subheader("Estresse")
     stress_gain = st.slider("Ganho de estresse",
@@ -96,10 +85,6 @@ with st.sidebar:
     beautiful_th = st.slider("Limiar BEAUTIFUL",
                              0.3, 0.9, BEAUTIFUL_EMERGENCE_THRESHOLD, 0.05,
                              help="Colony stress mínimo para surgirem os Lindos (BEAUTIFUL).")
-    beautiful_sm = st.slider("Mortalidade BEAUTIFUL por estresse",
-                             0.0, 0.001, BEAUTIFUL_STRESS_MORTALITY, 0.00001,
-                             format="%.5f",
-                             help="Taxa adicional de morte dos BEAUTIFUL proporcional ao estresse da colônia.")
     col_div = st.slider("Divisor estresse colônia",
                         100, 10000, COLONY_STRESS_DIVISOR, 50,
                         help="População que equivale a 50% do estresse da colônia. "
@@ -116,22 +101,13 @@ with st.sidebar:
                                format="%.1f",
                                help="Multiplicador de comida/água. 1.0 = abundância.")
     station_max = st.slider("Ocupação máxima por estação",
-                            1, 30, STATION_MAX_OCCUPANCY, 1,
+                            1, 10, STATION_MAX_OCCUPANCY, 1,
                             help="Máximo de agentes por estação de comida.")
     n_stations = st.slider("Número de estações de comida",
-                           1, 20, FEEDING_STATIONS_COUNT, 1,
+                           1, 12, FEEDING_STATIONS_COUNT, 1,
                            help="Total de pontos de alimentação no grid.")
 
     st.subheader("Gestação & Maternidade")
-    pregnancy_dur = st.slider("Duração da gestação",
-                              10, 40, PREGNANCY_DURATION, 1,
-                              help="Turnos de gestação até o parto.")
-    weaning_p = st.slider("Periode de desmame",
-                          10, 40, WEANING_PERIOD, 1,
-                          help="Turnos em que filhotes são vulneráveis ao estresse da mãe.")
-    nest_cap = st.slider("Capacidade do ninho",
-                         5, 30, NEST_CAPACITY, 1,
-                         help="Máximo de agentes por ninho sem penalidade de estresse.")
     resorption_p = st.slider("Prob. reabsorção fetal",
                              0.0, 0.8, RESORPTION_PROBABILITY, 0.05,
                              help="Chance de gestação ser reabsorvida sob estresse")
@@ -179,7 +155,7 @@ CHECKPOINT_NAMES = [
 def evaluate_with_llm(pop_history, stress_history, col_history,
                        beautiful_history, params_used, n_steps):
     api_key = os.getenv('OLLAMA_API_KEY', '')
-    base_url = os.getenv('OLLAMA_BASE_URL', 'https://ollama.com')
+    base_url = os.getenv('OLLAMA_BASE_URL', 'https://api.ollama.com')
     model_name = os.getenv('OLLAMA_MODEL', 'ministral-3:3b')
 
     if not api_key:
@@ -254,9 +230,7 @@ def run_simulation(n_steps, grid_w, grid_h, fertility, litter_max,
                    max_age, stress_gain, stress_recovery,
                    alpha_th, beautiful_th, col_div, enrichment, anim_speed,
                    cannibal, resource_avail, station_max, n_stations,
-                   resorption_p, mat_aggr_th, sd_birth_factor,
-                   stressed_density_th, repro_start, repro_end,
-                   pregnancy_dur, weaning_p, nest_cap, beautiful_sm):
+                   resorption_p, mat_aggr_th, sd_birth_factor):
     params = {
         'GRID_WIDTH': grid_w,
         'GRID_HEIGHT': grid_h,
@@ -276,13 +250,6 @@ def run_simulation(n_steps, grid_w, grid_h, fertility, litter_max,
         'RESORPTION_PROBABILITY': resorption_p,
         'MATERNAL_AGGRESSION_THRESHOLD': mat_aggr_th,
         'SOCIAL_DAMAGE_BIRTH_FACTOR': sd_birth_factor,
-        'STRESSED_DENSITY_THRESHOLD': stressed_density_th,
-        'REPRODUCTIVE_AGE_START': repro_start,
-        'REPRODUCTIVE_AGE_END': repro_end,
-        'PREGNANCY_DURATION': pregnancy_dur,
-        'WEANING_PERIOD': weaning_p,
-        'NEST_CAPACITY': nest_cap,
-        'BEAUTIFUL_STRESS_MORTALITY': beautiful_sm,
     }
 
     import universo25_model as m
@@ -428,8 +395,6 @@ if run_btn:
             alpha_th, beautiful_th, col_div, enrichment, anim_speed,
             cannibal, resource_avail, station_max, n_stations,
             resorption_p, mat_aggr_th, sd_birth_factor,
-            stressed_density_th, repro_start, repro_end,
-            pregnancy_dur, weaning_p, nest_cap, beautiful_sm,
         )
     st.success("Simulação concluída!")
 else:
